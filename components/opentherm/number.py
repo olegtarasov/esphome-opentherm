@@ -3,6 +3,7 @@ from typing import Any, Dict
 import esphome.codegen as cg
 import esphome.config_validation as cv
 from esphome.components import number
+from esphome.components.template import number as template_number
 from esphome.const import CONF_ID, CONF_UNIT_OF_MEASUREMENT, CONF_STEP
 
 from . import const, schema, validate, input, generate
@@ -10,7 +11,7 @@ from . import const, schema, validate, input, generate
 DEPENDENCIES = [ const.OPENTHERM ]
 COMPONENT_TYPE = const.NUMBER
 
-OpenthermNumber = generate.opentherm_ns.class_("OpenthermNumber", number.Number, cg.Component, input.OpenthermInput)
+OpenthermNumber = generate.opentherm_ns.class_("OpenthermNumber", template_number.TemplateNumber, cg.Component, input.OpenthermInput)
 
 async def new_openthermnumber(config: Dict[str, Any]) -> cg.Pvariable:
     var = cg.new_Pvariable(config[CONF_ID])
@@ -20,7 +21,7 @@ async def new_openthermnumber(config: Dict[str, Any]) -> cg.Pvariable:
     return var
 
 def get_entity_validation_schema(entity: schema.InputSchema) -> cv.Schema:
-    return number.NUMBER_SCHEMA \
+    return template_number.CONFIG_SCHEMA \
         .extend({
             cv.GenerateID(): cv.declare_id(OpenthermNumber),
             cv.Optional(CONF_UNIT_OF_MEASUREMENT, entity["unit_of_measurement"]): cv.string_strict,
