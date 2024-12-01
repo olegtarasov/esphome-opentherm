@@ -314,21 +314,12 @@ bool OpenTherm::init_esp32_timer_() {
 }
 
 void IRAM_ATTR OpenTherm::start_esp32_timer_(uint64_t alarm_value) {
-  esp_err_t result;
-
-  result = timer_set_alarm_value(this->timer_group_, this->timer_idx_, alarm_value);
+  esp_err_t result =
+      timer_set_alarm_value(this->timer_group_, this->timer_idx_, alarm_value);
   if (result != ESP_OK) {
-    const auto *error = esp_err_to_name(result);
-    ESP_LOGE(TAG, "Failed to set alarm value. Error: %s", error);
     return;
   }
-
-  result = timer_start(this->timer_group_, this->timer_idx_);
-  if (result != ESP_OK) {
-    const auto *error = esp_err_to_name(result);
-    ESP_LOGE(TAG, "Failed to start the timer. Error: %s", error);
-    return;
-  }
+  timer_start(this->timer_group_, this->timer_idx_);
 }
 
 // 5 kHz timer_
@@ -345,22 +336,11 @@ void IRAM_ATTR OpenTherm::start_write_timer_() {
 
 void IRAM_ATTR OpenTherm::stop_timer_() {
   InterruptLock const lock;
-
-  esp_err_t result;
-
-  result = timer_pause(this->timer_group_, this->timer_idx_);
+  esp_err_t result = timer_pause(this->timer_group_, this->timer_idx_);
   if (result != ESP_OK) {
-    const auto *error = esp_err_to_name(result);
-    ESP_LOGE(TAG, "Failed to pause the timer. Error: %s", error);
     return;
   }
-
-  result = timer_set_counter_value(this->timer_group_, this->timer_idx_, 0);
-  if (result != ESP_OK) {
-    const auto *error = esp_err_to_name(result);
-    ESP_LOGE(TAG, "Failed to set timer counter to 0 after pausing. Error: %s", error);
-    return;
-  }
+  timer_set_counter_value(this->timer_group_, this->timer_idx_, 0);
 }
 
 #endif  // END ESP32
