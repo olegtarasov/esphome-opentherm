@@ -152,6 +152,12 @@ void OpenthermHub::setup() {
     this->mark_failed();
     return;
   }
+  if (this->check_for_lite()) {
+    ESP_LOGE(TAG, "Failed to initialize OpenTherm hub. See previous log "
+                  "messages for details.");
+    this->mark_failed();
+    return;
+  }
 
   // Ensure that there is at least one request, as we are required to
   // communicate at least once every second. Sending the status request is
@@ -291,6 +297,34 @@ void OpenthermHub::sync_loop_() {
   }
 
   this->read_response_();
+}
+
+bool OpenthermHub::check_for_lite(void) {
+  int32_t timeout = this->opentherm_->get_timeout();
+  auto request = this->build_request_(MessageId::STATUS);
+  ESP_LOGD(TAG, "Sending request with id %d (%s)", request.id,
+           this->opentherm_->message_id_to_str((MessageId)request.id));
+  this->opentherm_->debug_data(request);
+
+  this->opentherm_->set_timeout(5000);
+  // Send the request
+  this->last_conversation_start_ = millis();
+  this->opentherm_->send(request);
+
+  this->opentherm_->listen();
+  auto now = millis();
+
+  this->opentherm_->set_timeout(timeout);
+
+  if (this->opentherm_->is_timeout()) {
+    this->handle_timeout_error_();
+    ESP_LOGE(TAG, "Possible OpenTherm-Lite detected");
+    ESP_LOGE(TAG, "Device failed to respond within %i seconds",
+             (now - this->last_conversation_start_) / 1000);
+    return true;
+    // Should a protocol error also flag OT/- ?
+  }
+  return false;
 }
 
 bool OpenthermHub::check_timings_(uint32_t cur_time) {

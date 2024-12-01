@@ -331,6 +331,9 @@ class OpenTherm {
   static void esp8266_timer_isr();
 #endif
 
+  void set_timeout(int32_t value) { this->device_timeout_ = value; }
+  int32_t get_timeout(void) { return this->device_timeout_; }
+
  private:
   InternalGPIOPin *in_pin_;
   InternalGPIOPin *out_pin_;

@@ -89,6 +89,7 @@ class OpenthermHub : public Component {
   void stop_opentherm_();
   void start_conversation_();
   void read_response_();
+  bool check_for_lite();
   bool check_timings_(uint32_t cur_time);
   bool should_skip_loop_(uint32_t cur_time) const;
   void sync_loop_();
