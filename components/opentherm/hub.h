@@ -95,8 +95,8 @@ class OpenthermHub : public Component {
   void sync_loop_();
 
   void write_initial_messages_(std::vector<MessageId> &target);
-  void write_repeating_messages(std::vector<MessageId> &target);
-  
+  void write_repeating_messages_(std::vector<MessageId> &target);
+
   template<typename F> bool spin_wait_(uint32_t timeout, F func) {
     auto start_time = millis();
     while (func()) {
@@ -135,7 +135,9 @@ class OpenthermHub : public Component {
   OPENTHERM_SETTING_LIST(OPENTHERM_SET_SETTING, )
 
   // Add a request to the vector of initial requests
-  void add_initial_message(MessageId message_id) { this->configured_messages_[message_id] = INITIAL_UNORDERED_MESSAGE_ORDER; }
+  void add_initial_message(MessageId message_id) {
+    this->configured_messages_[message_id] = INITIAL_UNORDERED_MESSAGE_ORDER;
+  }
   void add_initial_message(MessageId message_id, uint8_t order) { this->configured_messages_[message_id] = order; }
   // Add a request to the set of repeating requests. Note that a large number of repeating
   // requests will slow down communication with the boiler. Each request may take up to 1 second,
@@ -147,7 +149,7 @@ class OpenthermHub : public Component {
   // or using a switch. ch_enable and dhw_enable default to true, the others to false.
   bool ch_enable = true, dhw_enable = true, cooling_enable = false, otc_active = false, ch2_active = false,
        summer_mode_active = false, dhw_block = false;
-  
+
   // Setters for the status variables
   void set_ch_enable(bool value) { this->ch_enable = value; }
   void set_dhw_enable(bool value) { this->dhw_enable = value; }

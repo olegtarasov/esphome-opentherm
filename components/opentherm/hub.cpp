@@ -102,14 +102,14 @@ OpenthermData OpenthermHub::build_request_(MessageId request_id) const {
     OPENTHERM_INPUT_SENSOR_MESSAGE_HANDLERS(OPENTHERM_MESSAGE_WRITE_MESSAGE, OPENTHERM_MESSAGE_WRITE_ENTITY, ,
                                             OPENTHERM_MESSAGE_WRITE_POSTSCRIPT, )
     OPENTHERM_SETTING_MESSAGE_HANDLERS(OPENTHERM_MESSAGE_WRITE_MESSAGE, OPENTHERM_MESSAGE_WRITE_SETTING, ,
-                                            OPENTHERM_MESSAGE_WRITE_POSTSCRIPT, )
+                                       OPENTHERM_MESSAGE_WRITE_POSTSCRIPT, )
     default:
       break;
   }
 
   // Finally, handle the simple read requests, which only change with the message id.
-  switch (request_id) { 
-    OPENTHERM_SENSOR_MESSAGE_HANDLERS(OPENTHERM_MESSAGE_READ_MESSAGE, OPENTHERM_IGNORE, , , ) 
+  switch (request_id) {
+    OPENTHERM_SENSOR_MESSAGE_HANDLERS(OPENTHERM_MESSAGE_READ_MESSAGE, OPENTHERM_IGNORE, , , )
     default:
       break;
   }
@@ -163,23 +163,23 @@ void OpenthermHub::setup() {
 
 void OpenthermHub::on_shutdown() { this->opentherm_->stop(); }
 
-void OpenthermHub::write_initial_messages_(std::vector<MessageId> &target) {
+// Disabling clang-tidy for this particular line since it keeps removing the trailing underscore (bug?)
+void OpenthermHub::write_initial_messages_(std::vector<MessageId> &target) {  // NOLINT
   std::vector<std::pair<MessageId, uint8_t>> sorted;
-  std::copy_if(
-      this->configured_messages_.begin(), 
-      this->configured_messages_.end(), 
-      std::back_inserter(sorted), 
-      [](const std::pair<MessageId, uint8_t> &pair) {return pair.second < REPEATING_MESSAGE_ORDER;});
-  std::sort(sorted.begin(), sorted.end(), [](const std::pair<MessageId, uint8_t> &a, const std::pair<MessageId, uint8_t> &b) {
-    return a.second < b.second;
-  });
-  
+  std::copy_if(this->configured_messages_.begin(), this->configured_messages_.end(), std::back_inserter(sorted),
+               [](const std::pair<MessageId, uint8_t> &pair) { return pair.second < REPEATING_MESSAGE_ORDER; });
+  std::sort(sorted.begin(), sorted.end(),
+            [](const std::pair<MessageId, uint8_t> &a, const std::pair<MessageId, uint8_t> &b) {
+              return a.second < b.second;
+            });
+
   target.clear();
   std::transform(sorted.begin(), sorted.end(), std::back_inserter(target),
                  [](const std::pair<MessageId, uint8_t> &pair) { return pair.first; });
 }
 
-void OpenthermHub::write_repeating_messages(std::vector<MessageId> &target) { 
+// Disabling clang-tidy for this particular line since it keeps removing the trailing underscore (bug?)
+void OpenthermHub::write_repeating_messages_(std::vector<MessageId> &target) { // NOLINT
   target.clear();
   for (auto const &pair : this->configured_messages_) {
     if (pair.second == REPEATING_MESSAGE_ORDER) {
@@ -196,11 +196,11 @@ void OpenthermHub::loop() {
 
   auto cur_time = millis();
   auto const cur_mode = this->opentherm_->get_mode();
-  
+
   if (this->handle_error_(cur_mode)) {
     return;
   }
-  
+
   switch (cur_mode) {
     case OperationMode::WRITE:
     case OperationMode::READ:
@@ -226,7 +226,7 @@ void OpenthermHub::loop() {
   this->last_mode_ = cur_mode;
 }
 
-bool OpenthermHub::handle_error_(OperationMode mode){
+bool OpenthermHub::handle_error_(OperationMode mode) {
   switch (mode) {
     case OperationMode::ERROR_PROTOCOL:
       // Protocol error can happen only while reading boiler response.
@@ -288,7 +288,7 @@ void OpenthermHub::sync_loop_() {
   if (this->handle_error_(this->opentherm_->get_mode())) {
     return;
   }
-  
+
   // Spin while response is being received
   if (!this->spin_wait_(1150, [&] { return this->opentherm_->is_active(); })) {
     ESP_LOGE(TAG, "Hub timeout triggered during receive");
@@ -331,7 +331,7 @@ void OpenthermHub::start_conversation_() {
   if (this->message_iterator_ == this->messages_.end()) {
     if (this->sending_initial_) {
       this->sending_initial_ = false;
-      this->write_repeating_messages(this->messages_);
+      this->write_repeating_messages_(this->messages_);
     }
     this->message_iterator_ = this->messages_.begin();
   }
@@ -394,8 +394,8 @@ void OpenthermHub::dump_config() {
   std::vector<MessageId> initial_messages;
   std::vector<MessageId> repeating_messages;
   this->write_initial_messages_(initial_messages);
-  this->write_repeating_messages(repeating_messages);
-  
+  this->write_repeating_messages_(repeating_messages);
+
   ESP_LOGCONFIG(TAG, "OpenTherm:");
   LOG_PIN("  In: ", this->in_pin_);
   LOG_PIN("  Out: ", this->out_pin_);

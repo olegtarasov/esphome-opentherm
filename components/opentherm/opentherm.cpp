@@ -317,7 +317,7 @@ void IRAM_ATTR OpenTherm::start_esp32_timer_(uint64_t alarm_value) {
   // We will report timer errors outside of interrupt handler
   this->timer_error_ = ESP_OK;
   this->timer_error_type_ = TimerErrorType::NO_TIMER_ERROR;
-  
+
   this->timer_error_ = timer_set_alarm_value(this->timer_group_, this->timer_idx_, alarm_value);
   if (this->timer_error_ != ESP_OK) {
     this->timer_error_type_ = TimerErrorType::SET_ALARM_VALUE_ERROR;
@@ -336,7 +336,7 @@ void OpenTherm::report_and_reset_timer_error() {
 
   ESP_LOGE(TAG, "Error occured while manipulating timer (%s): %s", this->timer_error_to_str(this->timer_error_type_),
            esp_err_to_name(this->timer_error_));
-  
+
   this->timer_error_ = ESP_OK;
   this->timer_error_type_ = NO_TIMER_ERROR;
 }
@@ -358,7 +358,7 @@ void IRAM_ATTR OpenTherm::stop_timer_() {
   // We will report timer errors outside of interrupt handler
   this->timer_error_ = ESP_OK;
   this->timer_error_type_ = TimerErrorType::NO_TIMER_ERROR;
-  
+
   this->timer_error_ = timer_pause(this->timer_group_, this->timer_idx_);
   if (this->timer_error_ != ESP_OK) {
     this->timer_error_type_ = TimerErrorType::TIMER_PAUSE_ERROR;
@@ -396,7 +396,7 @@ void IRAM_ATTR OpenTherm::stop_timer_() {
 }
 
 // There is nothing to report on ESP8266
-void OpenTherm::report_timer_error_() { }
+void OpenTherm::report_timer_error_() {}
 
 #endif  // END ESP8266
 
@@ -424,7 +424,7 @@ const char *OpenTherm::operation_mode_to_str(OperationMode mode) {
     TO_STRING_MEMBER(SENT)
     TO_STRING_MEMBER(ERROR_PROTOCOL)
     TO_STRING_MEMBER(ERROR_TIMEOUT)
-    TO_STRING_MEMBER(ERROR_TIMER)  
+    TO_STRING_MEMBER(ERROR_TIMER)
     default:
       return "<INVALID>";
   }
@@ -441,7 +441,7 @@ const char *OpenTherm::protocol_error_to_str(ProtocolErrorType error_type) {
   }
 }
 const char *OpenTherm::timer_error_to_str(TimerErrorType error_type) {
-  switch (error_type) { 
+  switch (error_type) {
     TO_STRING_MEMBER(NO_TIMER_ERROR)
     TO_STRING_MEMBER(SET_ALARM_VALUE_ERROR)
     TO_STRING_MEMBER(TIMER_START_ERROR)
