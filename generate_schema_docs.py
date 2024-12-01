@@ -49,6 +49,10 @@ sections = {
         + (MD_LINEBREAK + f"  Supports `auto_max_value`" if sch.auto_max_value is not None else "")
         for key, sch in schema.INPUTS.items()
     ]) + LINESEP,
+    "setting": LINESEP.join([
+        f"- `{key}`: {sch.description}"
+        for key, sch in schema.SETTINGS.items()
+    ]) + LINESEP,
     "switch": LINESEP.join([
         f"- `{key}`: {sch.description}"
         + MD_LINEBREAK + f"  Defaults to *{sch.default_mode.endswith('on')}*"

@@ -64,7 +64,7 @@ opentherm:
   out_pin: GPIOXX
 ```
 
-### Configuration variables:
+### Configuration variables
 
 - `in_pin` (**Required**, number): The pin of the OpenTherm hardware bridge which is usually labeled ``out`` on the
   board.
@@ -76,6 +76,28 @@ opentherm:
 - `opentherm_version` (**Optional**, float): OpenTherm version that is required for some boilers to work (message
   id 124). You don't need to specify this if everything works.
 - `id` (**Optional**): Manually specify the ID used for code generation.  Required if you have multiple buses.
+
+#### Optional boiler-specific configuration
+
+Some boilers require certain OpenTherm messages to be sent by thermostat on initialization in order to work correctly.
+You can use the following settings in hub configuration to make your particular boiler happy.
+
+<!-- BEGIN schema_docs:setting -->
+- `controller_product_type` (**Optional**, byte [0-255], OpenTherm message id `126` high byte): Controller product type
+- `controller_product_version` (**Optional**, byte [0-255], OpenTherm message id `126` low byte): Controller product
+  version
+- `opentherm_version_controller` (**Optional**, float, OpenTherm message id `124`): Version of OpenTherm implemented by
+controller
+- `controller_configuration` (**Optional**, byte [0-255], OpenTherm message id `2` high byte): Controller configuration
+- `controller_id` (**Optional**, byte [0-255], OpenTherm message id `2` low byte): Controller ID code
+<!-- END schema_docs:setting -->
+
+#### Automations
+
+- `before_send` (**Optional**) An automation to perform on OpenTherm message before it is sent to the boiler.
+- `before_process_response` (**Optional**) An automation to perform on boiler response before it is processed.
+
+See [below](#on-the-fly-message-editing) for details.
 
 ### Note abut sync mode
 
@@ -349,6 +371,38 @@ sensor:
       name: "Boiler fan speed"
       data_type: "u16" # overrides the default u8_lb_60 message
 ```
+
+### On-the-fly message editing
+
+Some boilers use non-standard message ids and formats. For example, [it's known](https://github.com/olegtarasov/esphome-opentherm/issues/11)
+that Daikin D2C boiler uses message id `162` instead of `56` to set target DHW temperature. In order to accomodate to
+all sorts of non-standard behavior, I've introduced two automations that allow to edit the low-level OpenTherm message:
+
+- `before_send`: fired just before the fully formed message is sent to the boiler. When you use a lambda, the message
+  is passed by reference as `x`.
+- `before_process_response`: fired when response message is received from the boiler and is about to be processed.
+  When you use a lambda, the message is passed by reference as `x`.
+
+This allows to make arbitrary alterations to any message. Here is an example of overriding message id for DHW setpoint
+for Daikin D2C boiler:
+
+```yaml
+before_send:
+    then:
+      - lambda: |-
+          if (x.id == 56) { // 56 is standard message id for DHW setpoint
+            x.id = 162;     // message is passed by refence, so we can change anything, including message id
+          }
+before_process_response:
+  then:
+    - lambda: |-
+        if (x.id == 162) { // We substitute the original id back, so that esphome is not confused.
+          x.id = 56;
+        }
+```
+
+You can check the [OpenthermData reference](https://esphome.io/api/structesphome_1_1opentherm_1_1_opentherm_data) for
+the list of all available fields.
 
 # Examples
 
