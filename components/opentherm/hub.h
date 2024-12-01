@@ -83,13 +83,14 @@ class OpenthermHub : public Component {
 
   // Create OpenTherm messages based on the message id
   OpenthermData build_request_(MessageId request_id) const;
-  void handle_protocol_write_error_();
-  void handle_protocol_read_error_();
+  bool handle_error_(OperationMode mode);
+  void handle_protocol_error_();
   void handle_timeout_error_();
+  void handle_timer_error_();
   void stop_opentherm_();
   void start_conversation_();
   void read_response_();
-  bool check_timings_(uint32_t cur_time);
+  void check_timings_(uint32_t cur_time);
   bool should_skip_loop_(uint32_t cur_time) const;
   void sync_loop_();
 
