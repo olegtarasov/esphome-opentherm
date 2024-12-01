@@ -375,8 +375,8 @@ sensor:
 ### On-the-fly message editing
 
 Some boilers use non-standard message ids and formats. For example, [it's known](https://github.com/olegtarasov/esphome-opentherm/issues/11)
-that Daikin D2C boiler uses message id `162` instead of `56` to set target DHW temperature. In order to accomodate to
-all sorts of non-standard behavior, I've introduced two automations that allow to edit the low-level OpenTherm message:
+that Daikin D2C boiler uses message id `162` instead of `56` to set target DHW temperature. In order to accomodate all
+sorts of non-standard behavior, I introduced two automations that allow editing the low-level OpenTherm message:
 
 - `before_send`: fired just before the fully formed message is sent to the boiler. When you use a lambda, the message
   is passed by reference as `x`.
@@ -387,18 +387,20 @@ This allows to make arbitrary alterations to any message. Here is an example of 
 for Daikin D2C boiler:
 
 ```yaml
-before_send:
+opentherm:
+  # Usual hub config
+  before_send:
+      then:
+        - lambda: |-
+            if (x.id == 56) { // 56 is standard message id for DHW setpoint
+              x.id = 162;     // message is passed by refence, so we can change anything, including message id
+            }
+  before_process_response:
     then:
       - lambda: |-
-          if (x.id == 56) { // 56 is standard message id for DHW setpoint
-            x.id = 162;     // message is passed by refence, so we can change anything, including message id
+          if (x.id == 162) { // We substitute the original id back, so that esphome is not confused.
+            x.id = 56;
           }
-before_process_response:
-  then:
-    - lambda: |-
-        if (x.id == 162) { // We substitute the original id back, so that esphome is not confused.
-          x.id = 56;
-        }
 ```
 
 You can check the [OpenthermData reference](https://esphome.io/api/structesphome_1_1opentherm_1_1_opentherm_data) for
