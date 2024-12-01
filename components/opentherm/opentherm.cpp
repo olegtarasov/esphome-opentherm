@@ -396,7 +396,7 @@ void IRAM_ATTR OpenTherm::stop_timer_() {
 }
 
 // There is nothing to report on ESP8266
-void OpenTherm::report_timer_error_() {}
+void OpenTherm::report_and_reset_timer_error() {}
 
 #endif  // END ESP8266
 

@@ -117,8 +117,8 @@ async def to_code(config: dict[str, Any]) -> None:
         else:
             if key == CONF_OPENTHERM_VERSION:
                 _LOGGER.warning(
-                    f"{CONF_OPENTHERM_VERSION} is deprecated and will be removed in esphome 2025.2.0\n"
-                    f"Please change to 'opentherm_version_controller'."
+                    "opentherm_version is deprecated and will be removed in esphome 2025.2.0\n"
+                    "Please change to 'opentherm_version_controller'."
                 )
             cg.add(getattr(var, f"set_{key}")(value))
 

@@ -179,7 +179,7 @@ void OpenthermHub::write_initial_messages_(std::vector<MessageId> &target) {  //
 }
 
 // Disabling clang-tidy for this particular line since it keeps removing the trailing underscore (bug?)
-void OpenthermHub::write_repeating_messages_(std::vector<MessageId> &target) { // NOLINT
+void OpenthermHub::write_repeating_messages_(std::vector<MessageId> &target) {  // NOLINT
   target.clear();
   for (auto const &pair : this->configured_messages_) {
     if (pair.second == REPEATING_MESSAGE_ORDER) {

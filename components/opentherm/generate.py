@@ -102,7 +102,7 @@ def define_setting_readers(component_type: str, keys: list[str]) -> None:
 
 
 def add_messages(hub: cg.MockObj, keys: list[str], schemas: dict[str, TSchema]):
-    messages: dict[str, tuple[bool, Optional[int]]] = dict()
+    messages: dict[str, tuple[bool, Optional[int]]] = {}
     for key in keys:
         messages[schemas[key].message] = (
             schemas[key].keep_updated,
