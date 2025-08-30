@@ -44,12 +44,15 @@ If you want to test unstable versions of the code, choose your branch first:
   **Use commit hashes or known tags to reference individual commits from this branch!**
 * `pr_*` — Changes that correspond to open PRs to ESPHome core.
 
-After you've chosen your branch, or individual commit, add this repository as external component to your config:
 
+ESPHome 2024.6.0+ includes native OpenTherm support. Fix for compile error.
+Remove the external component reference and use the built-in one.
+Don't add any repository as external component to your config or
+Remove following section from your YAML file, if you had it.
 ```yaml
-external_components:
-  source: github://olegtarasov/esphome-opentherm[@<branch or tag>]
-  refresh: 0s
+#external_components:
+#  source: github://olegtarasov/esphome-opentherm[@<branch or tag>]
+#  refresh: 0s
 ```
 
 ## Declaring the OpenTherm hub
@@ -487,7 +490,8 @@ switch:
   - platform: opentherm
     ch_enable:
       name: "Boiler Central Heating enabled"
-      restore_mode: RESTORE_DEFAULT_ON
+      #restore_mode: RESTORE_DEFAULT_ON # no longer supported
+      id: boiler_central_heating
 
 climate:
   - platform: pid
@@ -498,6 +502,17 @@ climate:
     control_parameters:
       kp: 0.4
       ki: 0.004
+```
+
+## Add default state on boot in esphome section instead of RESTORE_DEFAULT_ON or OFF
+The OpenTherm switches don't support the standard switch modes like restore_default_on and restore_default_off.
+```yaml
+esphome:
+  name: thermostat-pid-complete
+  on_boot:
+    priority: -100  # Run after everything is initialized
+    then:
+      - switch.turn_on: boiler_central_heating  # Enable CH by default
 ```
 
 # References
