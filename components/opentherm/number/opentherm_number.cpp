@@ -1,4 +1,4 @@
-#include "number.h"
+#include "opentherm_number.h"
 
 namespace esphome {
 namespace opentherm {
@@ -17,7 +17,7 @@ void OpenthermNumber::setup() {
   if (!this->restore_value_) {
     value = this->initial_value_;
   } else {
-    this->pref_ = global_preferences->make_preference<float>(this->get_object_id_hash());
+    this->pref_ = global_preferences->make_preference<float>(this->get_preference_hash());
     if (!this->pref_.load(&value)) {
       if (!std::isnan(this->initial_value_)) {
         value = this->initial_value_;
@@ -31,9 +31,11 @@ void OpenthermNumber::setup() {
 
 void OpenthermNumber::dump_config() {
   LOG_NUMBER("", "OpenTherm Number", this);
-  ESP_LOGCONFIG(TAG, "  Restore value: %d", this->restore_value_);
-  ESP_LOGCONFIG(TAG, "  Initial value: %.2f", this->initial_value_);
-  ESP_LOGCONFIG(TAG, "  Current value: %.2f", this->state);
+  ESP_LOGCONFIG(TAG,
+                "  Restore value: %d\n"
+                "  Initial value: %.2f\n"
+                "  Current value: %.2f",
+                this->restore_value_, this->initial_value_, this->state);
 }
 
 }  // namespace opentherm
