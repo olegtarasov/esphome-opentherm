@@ -151,6 +151,8 @@ void OpenthermHub::setup() {
     this->mark_failed();
     return;
   }
+  // Allow other components (UART displays, sensors) to settle before first conversation
+  this->warmup_until_ = millis() + 400;  // 0.4s warmup
 
   // Ensure that there is at least one request, as we are required to
   // communicate at least once every second. Sending the status request is
@@ -235,10 +237,6 @@ bool OpenthermHub::handle_error_(OperationMode mode) {
       // Timeout error might happen while we wait for device to respond.
       this->handle_timeout_error_();
       return true;
-    case OperationMode::ERROR_TIMER:
-      // Timer error can happen only on ESP32.
-      this->handle_timer_error_();
-      return true;
     default:
       return false;
   }
@@ -259,11 +257,9 @@ void OpenthermHub::sync_loop_() {
   }
 
   this->start_conversation_();
-  // There may be a timer error at this point
-  if (this->handle_error_(this->opentherm_->get_mode())) {
-    return;
-  }
 
+  // This is not neccessary now, since RMT transmission waits for completion in `opentherm.cpp`.
+  // But in the future we will make it async again so we don't remove this block.
   // Spin while message is being sent to device
   if (!this->spin_wait_(1150, [&] { return this->opentherm_->is_active(); })) {
     ESP_LOGE(TAG, "Hub timeout triggered during send");
@@ -318,6 +314,17 @@ void OpenthermHub::check_timings_(uint32_t cur_time) {
 }
 
 bool OpenthermHub::should_skip_loop_(uint32_t cur_time) const {
+  if (this->warmup_until_ != 0 && cur_time < this->warmup_until_) {
+    ESP_LOGV(TAG, "Warmup period active, delaying conversation");
+    return true;
+  }
+  if (this->skip_first_conversation_) {
+    // Skip exactly one conversation after warmup to let RMT settle
+    // Cast away const as this method is logically mutating transient control flags
+    const_cast<OpenthermHub *>(this)->skip_first_conversation_ = false;
+    ESP_LOGV(TAG, "Skipping first conversation after warmup");
+    return true;
+  }
   if (this->last_conversation_end_ > 0 && (cur_time - this->last_conversation_end_) < 100) {
     ESP_LOGV(TAG, "Less than 100 ms elapsed since last convo, skipping this iteration");
     return true;
@@ -378,15 +385,13 @@ void OpenthermHub::handle_protocol_error_() {
 }
 
 void OpenthermHub::handle_timeout_error_() {
-  ESP_LOGW(TAG, "Timeout while waiting for response from device");
+  if (this->suppress_first_timeout_) {
+    this->suppress_first_timeout_ = false;
+    ESP_LOGV(TAG, "Initial OpenTherm timeout suppressed");
+  } else {
+    ESP_LOGW(TAG, "Timeout while waiting for response from device");
+  }
   this->stop_opentherm_();
-}
-
-void OpenthermHub::handle_timer_error_() {
-  this->opentherm_->report_and_reset_timer_error();
-  this->stop_opentherm_();
-  // Timer error is critical, there is no point in retrying.
-  this->mark_failed();
 }
 
 void OpenthermHub::dump_config() {
