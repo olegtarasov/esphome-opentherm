@@ -318,8 +318,10 @@ void OpenthermHub::check_timings_(uint32_t cur_time) {
 }
 
 bool OpenthermHub::should_skip_loop_(uint32_t cur_time) const {
-  if (this->last_conversation_end_ > 0 && (cur_time - this->last_conversation_end_) < 100) {
-    ESP_LOGV(TAG, "Less than 100 ms elapsed since last convo, skipping this iteration");
+  if (this->last_conversation_end_ > 0 &&
+      (cur_time - this->last_conversation_end_) < this->min_conversation_interval_) {
+    ESP_LOGV(TAG, "Less than %u ms elapsed since last convo, skipping this iteration",
+             static_cast<unsigned>(this->min_conversation_interval_));
     return true;
   }
 
@@ -400,13 +402,15 @@ void OpenthermHub::dump_config() {
   LOG_PIN("  Out: ", this->out_pin_);
   ESP_LOGCONFIG(TAG,
                 "  Sync mode: %s\n"
+                "  Minimum conversation interval: %u ms\n"
                 "  Sensors: %s\n"
                 "  Binary sensors: %s\n"
                 "  Switches: %s\n"
                 "  Input sensors: %s\n"
                 "  Outputs: %s\n"
                 "  Numbers: %s",
-                YESNO(this->sync_mode_), SHOW(OPENTHERM_SENSOR_LIST(ID, )), SHOW(OPENTHERM_BINARY_SENSOR_LIST(ID, )),
+                YESNO(this->sync_mode_), static_cast<unsigned>(this->min_conversation_interval_),
+                SHOW(OPENTHERM_SENSOR_LIST(ID, )), SHOW(OPENTHERM_BINARY_SENSOR_LIST(ID, )),
                 SHOW(OPENTHERM_SWITCH_LIST(ID, )), SHOW(OPENTHERM_INPUT_SENSOR_LIST(ID, )),
                 SHOW(OPENTHERM_OUTPUT_LIST(ID, )), SHOW(OPENTHERM_NUMBER_LIST(ID, )));
   ESP_LOGCONFIG(TAG, "  Initial requests:");
