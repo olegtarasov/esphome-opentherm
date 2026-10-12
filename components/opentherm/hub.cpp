@@ -309,11 +309,12 @@ void OpenthermHub::sync_loop_() {
 }
 
 void OpenthermHub::check_timings_(uint32_t cur_time) {
-  if (this->last_conversation_start_ > 0 && (cur_time - this->last_conversation_start_) > 1150) {
+  const uint32_t max_elapsed = 1150 + this->min_conversation_interval_;
+  if (this->last_conversation_start_ > 0 && (cur_time - this->last_conversation_start_) > max_elapsed) {
     ESP_LOGW(TAG,
-             "%d ms elapsed since the start of the last convo, but 1150 ms are allowed at maximum. Look at other "
+             "%u ms elapsed since the start of the last convo, but %u ms are allowed at maximum. Look at other "
              "components that might slow the loop down.",
-             (int) (cur_time - this->last_conversation_start_));
+             static_cast<unsigned>(cur_time - this->last_conversation_start_), static_cast<unsigned>(max_elapsed));
   }
 }
 
