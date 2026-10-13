@@ -338,6 +338,7 @@ void OpenthermHub::start_conversation_() {
   auto request = this->build_request_(*this->message_iterator_);
 
   this->before_send_callback_.call(request);
+  this->last_request_ = request;
 
   ESP_LOGD(TAG, "Sending request with id %d (%s)", request.id,
            this->opentherm_->message_id_to_str((MessageId) request.id));
@@ -356,6 +357,50 @@ void OpenthermHub::read_response_() {
   }
 
   this->stop_opentherm_();
+
+  if (response.id != this->last_request_.id) {
+    ESP_LOGW(TAG, "Ignoring response with id %d (%s), expected id %d (%s)", response.id,
+             this->opentherm_->message_id_to_str((MessageId) response.id), this->last_request_.id,
+             this->opentherm_->message_id_to_str((MessageId) this->last_request_.id));
+    this->opentherm_->debug_data(response);
+    return;
+  }
+
+  const auto response_type = (MessageType) response.type;
+  if (response_type == MessageType::DATA_INVALID || response_type == MessageType::UNKNOWN_DATAID) {
+    ESP_LOGW(TAG, "Device rejected request with id %d (%s): %s", response.id,
+             this->opentherm_->message_id_to_str((MessageId) response.id),
+             this->opentherm_->message_type_to_str(response_type));
+    this->opentherm_->debug_data(response);
+    // The device understood the request but cannot provide or accept the data. Move on so an unsupported
+    // message cannot block all other OpenTherm traffic.
+    this->message_iterator_++;
+    return;
+  }
+
+  MessageType expected_response_type;
+  switch ((MessageType) this->last_request_.type) {
+    case MessageType::READ_DATA:
+      expected_response_type = MessageType::READ_ACK;
+      break;
+    case MessageType::WRITE_DATA:
+      expected_response_type = MessageType::WRITE_ACK;
+      break;
+    default:
+      ESP_LOGW(TAG, "Ignoring response to request with unexpected type %s",
+               this->opentherm_->message_type_to_str((MessageType) this->last_request_.type));
+      this->opentherm_->debug_data(response);
+      return;
+  }
+
+  if (response_type != expected_response_type) {
+    ESP_LOGW(TAG, "Ignoring response with type %s for request id %d (%s), expected %s",
+             this->opentherm_->message_type_to_str(response_type), response.id,
+             this->opentherm_->message_id_to_str((MessageId) response.id),
+             this->opentherm_->message_type_to_str(expected_response_type));
+    this->opentherm_->debug_data(response);
+    return;
+  }
 
   this->before_process_response_callback_.call(response);
   this->process_response(response);
