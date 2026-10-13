@@ -309,17 +309,20 @@ void OpenthermHub::sync_loop_() {
 }
 
 void OpenthermHub::check_timings_(uint32_t cur_time) {
-  if (this->last_conversation_start_ > 0 && (cur_time - this->last_conversation_start_) > 1150) {
+  const uint32_t max_elapsed = 1150 + this->min_conversation_interval_;
+  if (this->last_conversation_start_ > 0 && (cur_time - this->last_conversation_start_) > max_elapsed) {
     ESP_LOGW(TAG,
-             "%d ms elapsed since the start of the last convo, but 1150 ms are allowed at maximum. Look at other "
+             "%u ms elapsed since the start of the last convo, but %u ms are allowed at maximum. Look at other "
              "components that might slow the loop down.",
-             (int) (cur_time - this->last_conversation_start_));
+             static_cast<unsigned>(cur_time - this->last_conversation_start_), static_cast<unsigned>(max_elapsed));
   }
 }
 
 bool OpenthermHub::should_skip_loop_(uint32_t cur_time) const {
-  if (this->last_conversation_end_ > 0 && (cur_time - this->last_conversation_end_) < 100) {
-    ESP_LOGV(TAG, "Less than 100 ms elapsed since last convo, skipping this iteration");
+  if (this->last_conversation_end_ > 0 &&
+      (cur_time - this->last_conversation_end_) < this->min_conversation_interval_) {
+    ESP_LOGV(TAG, "Less than %u ms elapsed since last convo, skipping this iteration",
+             static_cast<unsigned>(this->min_conversation_interval_));
     return true;
   }
 
@@ -400,13 +403,15 @@ void OpenthermHub::dump_config() {
   LOG_PIN("  Out: ", this->out_pin_);
   ESP_LOGCONFIG(TAG,
                 "  Sync mode: %s\n"
+                "  Minimum conversation interval: %u ms\n"
                 "  Sensors: %s\n"
                 "  Binary sensors: %s\n"
                 "  Switches: %s\n"
                 "  Input sensors: %s\n"
                 "  Outputs: %s\n"
                 "  Numbers: %s",
-                YESNO(this->sync_mode_), SHOW(OPENTHERM_SENSOR_LIST(ID, )), SHOW(OPENTHERM_BINARY_SENSOR_LIST(ID, )),
+                YESNO(this->sync_mode_), static_cast<unsigned>(this->min_conversation_interval_),
+                SHOW(OPENTHERM_SENSOR_LIST(ID, )), SHOW(OPENTHERM_BINARY_SENSOR_LIST(ID, )),
                 SHOW(OPENTHERM_SWITCH_LIST(ID, )), SHOW(OPENTHERM_INPUT_SENSOR_LIST(ID, )),
                 SHOW(OPENTHERM_OUTPUT_LIST(ID, )), SHOW(OPENTHERM_NUMBER_LIST(ID, )));
   ESP_LOGCONFIG(TAG, "  Initial requests:");

@@ -62,6 +62,7 @@ ESPHome runs on. As such, your bridge's `in` pin becomes the hub's `out` pin and
 opentherm:
   in_pin: GPIOXX
   out_pin: GPIOXX
+  min_conversation_interval: 500ms
 ```
 
 ### Configuration variables
@@ -73,6 +74,8 @@ opentherm:
 - `sync_mode` (**Optional**, boolean, default **false**): Synchronous communication mode prevents other components
   from disabling interrupts while we are talking to the boiler. Enable if you experience a lot of random intermittent
   invalid response errors (very likely to happen while using Dallas temperature sensors).
+- `min_conversation_interval` (**Optional**, time, default **100ms**): Minimum pause between the end of one OpenTherm
+  conversation and the start of the next one. Increase this for devices that need more time between requests.
 - `id` (**Optional**): Manually specify the ID used for code generation.  Required if you have multiple buses.
 
 #### Optional boiler-specific configuration
